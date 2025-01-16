@@ -1,0 +1,45 @@
+object frmTelaInicial: TfrmTelaInicial
+  Left = 0
+  Top = 0
+  Caption = 'frmTelaInicial'
+  ClientHeight = 441
+  ClientWidth = 624
+  Color = clBtnFace
+  Font.Charset = DEFAULT_CHARSET
+  Font.Color = clWindowText
+  Font.Height = -12
+  Font.Name = 'Segoe UI'
+  Font.Style = []
+  TextHeight = 15
+  object LabelStatus: TLabel
+    Left = 240
+    Top = 280
+    Width = 21
+    Height = 45
+    Caption = '...'
+    Font.Charset = DEFAULT_CHARSET
+    Font.Color = clWindowText
+    Font.Height = -32
+    Font.Name = 'Segoe UI'
+    Font.Style = []
+    ParentFont = False
+  end
+  object Atualizar: TButton
+    Left = 192
+    Top = 120
+    Width = 201
+    Height = 65
+    Caption = 'Atualizar'
+    TabOrder = 0
+    OnClick = AtualizarClick
+  end
+  object ProgressBar: TProgressBar
+    Left = 24
+    Top = 208
+    Width = 561
+    Height = 25
+    Style = pbstMarquee
+    TabOrder = 1
+    Visible = False
+  end
+end
