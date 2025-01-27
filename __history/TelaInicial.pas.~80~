@@ -20,8 +20,10 @@ type
     Query: TFDQuery;
     Banco: TFDConnection;
     FDPhysFBDriverLink1: TFDPhysFBDriverLink;
+    Button1: TButton;
     procedure FormDestroy(Sender: TObject);
     procedure AtualizarClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
   private
     { Private declarations }
     function AtualizarDelphi(AUrl, ACaminho: String): Boolean;
@@ -93,24 +95,31 @@ begin
                   TThread.Synchronize(nil,
                   procedure
                   begin
-                    LabelStatus.Left := 121;
-                    LabelStatus.Caption := 'Atualizando Banco de Dados...';
+                    ProgressBar.Visible := False;
+                    LabelStatus.Left := 72;
+                    LabelStatus.Caption := 'Atualização concluída com Sucesso!';
                   end);
                   AtualizacoesBanco := GetQueries;
+                  TThread.Synchronize(nil, procedure begin ShowMessage('T1'); end);
+                  TThread.Synchronize(nil, procedure begin ShowMessage(Length(AtualizacoesBanco).ToString); end);
                   for var cmd in AtualizacoesBanco do
                     begin
                       try
-                        ExecutarCmd(cmd);
+                        TThread.Synchronize(nil,
+                          procedure
+                          begin
+                            ShowMessage(Cmd);
+                          end);
                       except
+                        on E: Exception do
+                          TThread.Synchronize(nil,
+                          procedure
+                          begin
+                            ShowMessage('Erro: '+E.message);
+                          end);
                       end;
                     end;
-                  TThread.Synchronize(nil,
-                  procedure
-                    begin
-                      ProgressBar.Visible := False;
-                      LabelStatus.Left := 72;
-                      LabelStatus.Caption := 'Atualização concluída com Sucesso!';
-                    end);
+                  TThread.Synchronize(nil, procedure begin ShowMessage('T2'); end);
                 end
               else
                 begin
@@ -188,6 +197,15 @@ begin
   end;
 end;
 
+procedure TfrmTelaInicial.Button1Click(Sender: TObject);
+var
+  testando: TArray<String>;
+begin
+  testando := SplitString('teste;abu;;Neto', '´');
+  for var c in testando do
+    ShowMessage(c);
+end;
+
 function TfrmTelaInicial.DeletarDiretorio(ACaminho: String): Boolean;
 begin
   TDirectory.Delete(ACaminho);
@@ -238,7 +256,7 @@ begin
   Response := TJSONObject.ParseJSONValue(Rest4.Content) as TJSONObject;
   try
     Queries := Response.GetValue<String>('query');
-    AtualizarBanco := SplitString(Queries, '´');
+    AtualizarBanco := SplitString(Queries, ';;');
   finally
     Response.Free;
   end;

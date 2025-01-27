@@ -45,4 +45,21 @@ object frmTelaInicial: TfrmTelaInicial
     TabOrder = 1
     Visible = False
   end
+  object Query: TFDQuery
+    Connection = Banco
+    Left = 216
+    Top = 64
+  end
+  object Banco: TFDConnection
+    Params.Strings = (
+      'DriverID=FB'
+      'User_Name=sysdba'
+      'Password=masterkey')
+    Left = 280
+    Top = 16
+  end
+  object FDPhysFBDriverLink1: TFDPhysFBDriverLink
+    Left = 408
+    Top = 40
+  end
 end
