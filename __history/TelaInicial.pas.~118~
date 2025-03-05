@@ -20,18 +20,22 @@ type
     Query: TFDQuery;
     Banco: TFDConnection;
     FDPhysFBDriverLink1: TFDPhysFBDriverLink;
+    Button1: TButton;
     procedure FormDestroy(Sender: TObject);
     procedure AtualizarClick(Sender: TObject);
+    procedure FormClose(Sender: TObject; var Action: TCloseAction);
   private
     { Private declarations }
     function AtualizarDelphi(AUrl, ACaminho: String): Boolean;
     function GetLinkDownload: String;
-    procedure MoverExecutavel(ACaminhoOrigem, ANovoCaminho: String);
+    function MoverExecutavel(ACaminhoOrigem, ANovoCaminho: String): Boolean;
     function DeletarDiretorio(ACaminho: String): Boolean;
-    function IsConnected: Boolean;
+    function BancoIsConnected: Boolean;
     procedure AtualizarBancoDeDados;
     function GetQueries: TArray<String>;
     procedure ExecutarCmd(ACmd: String);
+    function SystemIsOpenned: Boolean;
+    procedure UpdateProgressBar;
   public
     { Public declarations }
   end;
@@ -55,100 +59,112 @@ end;
 
 procedure TfrmTelaInicial.AtualizarClick(Sender: TObject);
 begin
-  if IsConnected then
+  if not SystemIsOpenned then
     begin
-      TTask.Run(procedure
-        var
-          Link: String;
-          Caminho: String;
-          Atualizou: Boolean;
-          AtualizacoesBanco: TArray<String>;
-          
+      if BancoIsConnected then
         begin
-          TThread.Synchronize(nil,
-          procedure
-          begin
-            LabelStatus.Left := 120;
-            LabelStatus.Caption := 'Obtendo link de Download...';
-          end);
-          Link := GetLinkDownload;
-          if not TDirectory.Exists(ExtractFilePath(Application.ExeName)+'Updates') then
-            TDirectory.CreateDirectory(ExtractFilePath(Application.ExeName)+'Updates');
-          Caminho := ExtractFilePath(Application.ExeName)+'Updates/NSCobranças.exe';
-
-          if Link <> '' then
+          Atualizar.Caption := 'Atualizando...';
+          TTask.Run(procedure
+            var
+              Link: String;
+              Caminho: String;
+              Atualizou: Boolean;
+              AtualizacoesBanco: TArray<String>;
+          
             begin
               TThread.Synchronize(nil,
               procedure
               begin
-                LabelStatus.Left := 8;
-                LabelStatus.Caption := 'Link obtido com sucesso, iniciando o download...';
-                ProgressBar.Visible := True;
+                LabelStatus.Left := 120;
+                LabelStatus.Caption := 'Obtendo link de Download...';
+                Application.ProcessMessages;
               end);
-              if not Assigned(frmTelaInicial) then
-                exit;
-              Atualizou := AtualizarDelphi(Link, Caminho);
-              if Atualizou then
+              Link := GetLinkDownload;
+              if not TDirectory.Exists(ExtractFilePath(Application.ExeName)+'Updates') then
+                TDirectory.CreateDirectory(ExtractFilePath(Application.ExeName)+'Updates');
+              Caminho := ExtractFilePath(Application.ExeName)+'Updates/NSCobranças.exe';
+
+              if Link <> '' then
                 begin
                   TThread.Synchronize(nil,
                   procedure
                   begin
-                    ProgressBar.Visible := False;
-                    LabelStatus.Left := 72;
-                    LabelStatus.Caption := 'Atualização concluída com Sucesso!';
+                    LabelStatus.Left := 8;
+                    LabelStatus.Caption := 'Link obtido com sucesso, iniciando o download...';
+                    Sleep(50);
+                    Application.ProcessMessages;
+                    UpdateProgressBar;
                   end);
-                  AtualizacoesBanco := GetQueries;
-                  TThread.Synchronize(nil, procedure begin ShowMessage('T1'); end);
-                  TThread.Synchronize(nil, procedure begin ShowMessage(Length(AtualizacoesBanco).ToString); end);
-                  for var cmd in AtualizacoesBanco do
+                  if not Assigned(frmTelaInicial) then
+                    exit;
+                  Atualizou := AtualizarDelphi(Link, Caminho);
+                  if Atualizou then
                     begin
-                      try
-                        TThread.Synchronize(nil,
-                          procedure
-                          begin
-                            ShowMessage(Cmd);
-                          end);
-                      except
-                        on E: Exception do
-                          TThread.Synchronize(nil,
-                          procedure
-                          begin
-                            ShowMessage('Erro: '+E.message);
-                          end);
-                      end;
+                      TThread.Synchronize(nil,
+                      procedure
+                      begin
+                        LabelStatus.Left := 121;
+                        LabelStatus.Caption := 'Atualizando Banco de Dados...';
+                        Application.ProcessMessages;
+                      end);
+                      AtualizacoesBanco := GetQueries;
+                      for var cmd in AtualizacoesBanco do
+                        begin
+                          try
+                            ExecutarCmd(cmd);
+                          except
+                          end;
+                        end;
+                      TThread.Synchronize(nil,
+                      procedure
+                        begin
+                          UpdateProgressBar;
+                          LabelStatus.Left := 72;
+                          LabelStatus.Caption := 'Atualização concluída com Sucesso!';
+                          Atualizar.Caption := 'Sair';
+                          Atualizar.OnClick := Self.Close;
+                          Application.ProcessMessages;
+                        end);
+                    end
+                  else
+                    begin
+                      TThread.Synchronize(nil,
+                      procedure
+                      begin
+                        UpdateProgressBar;
+                        LabelStatus.Left := 72;
+                        LabelStatus.Caption := 'Não foi possível concluir a atualização!';
+                        Application.ProcessMessages;
+                      end);
                     end;
-                  TThread.Synchronize(nil, procedure begin ShowMessage('T2'); end);
                 end
               else
                 begin
-                  TThread.Synchronize(nil,
-                  procedure
-                  begin
-                    ProgressBar.Visible := False;
-                    LabelStatus.Left := 72;
-                    LabelStatus.Caption := 'Não foi possível concluir a atualização!';
-                  end);
+                  UpdateProgressBar;
+                  DeletarDiretorio(ExtractFilePath(Application.ExeName)+'Updates');
+                  TThread.Synchronize(nil, procedure begin ShowMessage('Houve um erro ao obter o link de download!'); end);
                 end;
-            end
-          else
-            begin
-              DeletarDiretorio(ExtractFilePath(Application.ExeName)+'Updates');
-              TThread.Synchronize(nil, procedure begin ShowMessage('Houve um erro ao obter o link de download!'); end);
-            end;
-        end);
+            end);
+        end
+      else
+        begin
+          var BancoAtualizar := TOpenDialog.Create(nil);
+          try
+            BancoAtualizar.Title := 'Selecione a Base de Dados que será Atualizada';
+            BancoAtualizar.Filter := '(*.fdb)|*.fdb';
+            BancoAtualizar.Execute();
+            if BancoAtualizar.FileName <> '' then
+              begin
+                Banco.Params.Database := BancoAtualizar.FileName;
+                Atualizar.Caption := 'Iniciar Atualização';
+              end;
+          finally
+            BancoAtualizar.Free;
+          end;
+        end;
     end
   else
-    begin
-      var BancoAtualizar := TOpenDialog.Create(nil);
-      try
-        BancoAtualizar.Title := 'Selecione a Base de Dados que será Atualizada';
-        BancoAtualizar.Filter := '(*.fdb)|*.fdb';
-        BancoAtualizar.Execute();
-        Banco.Params.Database := BancoAtualizar.FileName;
-      finally
-        BancoAtualizar.Free;
-      end;
-    end;
+    ShowMessage('Feche o Sistema antes de Iniciar a Atualização!');
 
 end;
 
@@ -189,8 +205,10 @@ begin
     Ssl.Free;
     if Result then
       begin
+        var a := ExtractFilePath(Application.ExeName)+'NSCobranças.exe';
         DeleteFile(ExtractFilePath(Application.ExeName)+'NSCobranças.exe');
-        MoverExecutavel(ACaminho, ExtractFilePath(Application.ExeName)+'NSCobranças.exe');
+        if not MoverExecutavel(ACaminho, ExtractFilePath(Application.ExeName)+'NSCobranças.exe') then
+          Result := False;
       end;
   end;
 end;
@@ -245,14 +263,14 @@ begin
   Response := TJSONObject.ParseJSONValue(Rest4.Content) as TJSONObject;
   try
     Queries := Response.GetValue<String>('query');
-    AtualizarBanco := SplitString(Queries, ';;');
+    AtualizarBanco := SplitString(Queries, '´');
   finally
     Response.Free;
   end;
   Result := AtualizarBanco;
 end;
 
-function TfrmTelaInicial.IsConnected: Boolean;
+function TfrmTelaInicial.BancoIsConnected: Boolean;
 begin
  if Banco.Params.Database <> '' then
   Result := True
@@ -261,11 +279,18 @@ begin
 
 end;
 
-procedure TfrmTelaInicial.MoverExecutavel(ACaminhoOrigem, ANovoCaminho: String);
+procedure TfrmTelaInicial.FormClose(Sender: TObject; var Action: TCloseAction);
 begin
+  Action := TCloseAction.caFree;
+end;
+
+function TfrmTelaInicial.MoverExecutavel(ACaminhoOrigem, ANovoCaminho: String): Boolean;
+begin
+  Result := False;
   try
     TFile.Move(ACaminhoOrigem, ANovoCaminho);
     DeletarDiretorio(ExtractFilePath(Application.ExeName)+'Updates');
+    Result := True;
   except
     on E: Exception do
       begin
@@ -274,6 +299,27 @@ begin
   end;
 
 
+end;
+
+function TfrmTelaInicial.SystemIsOpenned: Boolean;
+var
+  System: THandle;
+begin
+
+  System := OpenMutex(MUTEX_ALL_ACCESS, False, 'NSCobranças');
+  Result := False;
+  if System <> 0 then
+    begin
+      Result := True;
+      CloseHandle(System);
+    end;
+end;
+
+procedure TfrmTelaInicial.UpdateProgressBar;
+begin
+  ProgressBar.Style := pbstNormal;
+  ProgressBar.Style := pbstMarquee;
+  ProgressBar.Visible := not ProgressBar.Visible;
 end;
 
 end.

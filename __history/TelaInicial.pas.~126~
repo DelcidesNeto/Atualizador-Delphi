@@ -103,7 +103,7 @@ begin
                   TThread.Synchronize(nil,
                   procedure
                   begin
-                    LabelStatus.Left := 20;
+                    LabelStatus.Left := 13;
                     LabelStatus.Caption := 'Link obtido com sucesso, iniciando o download...';
                     Sleep(50);
                     Application.ProcessMessages;

@@ -12,6 +12,7 @@ object frmTelaInicial: TfrmTelaInicial
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poScreenCenter
+  OnCreate = FormCreate
   OnDestroy = FormDestroy
   TextHeight = 15
   object LabelStatus: TLabel
@@ -32,7 +33,7 @@ object frmTelaInicial: TfrmTelaInicial
     Top = 120
     Width = 201
     Height = 65
-    Caption = 'Atualizar NSCobran'#231'as'
+    Caption = 'Vincular Banco de Dados'
     TabOrder = 0
     OnClick = AtualizarClick
   end

@@ -32,7 +32,7 @@ object frmTelaInicial: TfrmTelaInicial
     Top = 120
     Width = 201
     Height = 65
-    Caption = 'Atualizar NSCobran'#231'as'
+    Caption = 'Vincular Banco de Dados'
     TabOrder = 0
     OnClick = AtualizarClick
   end
@@ -44,15 +44,6 @@ object frmTelaInicial: TfrmTelaInicial
     Style = pbstMarquee
     TabOrder = 1
     Visible = False
-  end
-  object Button1: TButton
-    Left = 288
-    Top = 296
-    Width = 75
-    Height = 25
-    Caption = 'teste'
-    TabOrder = 2
-    OnClick = Button1Click
   end
   object Query: TFDQuery
     Connection = Banco

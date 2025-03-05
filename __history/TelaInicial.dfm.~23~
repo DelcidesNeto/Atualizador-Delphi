@@ -32,7 +32,7 @@ object frmTelaInicial: TfrmTelaInicial
     Top = 120
     Width = 201
     Height = 65
-    Caption = 'Atualizar NSCobran'#231'as'
+    Caption = 'Vincular Banco de Dados'
     TabOrder = 0
     OnClick = AtualizarClick
   end
@@ -45,13 +45,21 @@ object frmTelaInicial: TfrmTelaInicial
     TabOrder = 1
     Visible = False
   end
-  object Button1: TButton
-    Left = 312
-    Top = 336
-    Width = 75
-    Height = 25
-    Caption = 'Criar dir'
-    TabOrder = 2
-    OnClick = Button1Click
+  object Query: TFDQuery
+    Connection = Banco
+    Left = 216
+    Top = 64
+  end
+  object Banco: TFDConnection
+    Params.Strings = (
+      'DriverID=FB'
+      'User_Name=sysdba'
+      'Password=masterkey')
+    Left = 280
+    Top = 16
+  end
+  object FDPhysFBDriverLink1: TFDPhysFBDriverLink
+    Left = 408
+    Top = 40
   end
 end
