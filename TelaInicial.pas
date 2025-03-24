@@ -10,7 +10,7 @@ uses
   FireDAC.Stan.Async, FireDAC.DApt, FireDAC.UI.Intf, FireDAC.Stan.Def,
   FireDAC.Stan.Pool, FireDAC.Phys, FireDAC.Phys.FB, FireDAC.Phys.FBDef,
   FireDAC.VCLUI.Wait, FireDAC.Phys.IBBase, Data.DB, FireDAC.Comp.Client,
-  FireDAC.Comp.DataSet, StrUtils, ShellAPI, System.IniFiles;
+  FireDAC.Comp.DataSet, StrUtils, ShellAPI, System.IniFiles, uTPLb_CryptographicLibrary, uTPLb_Codec;
 
 type
   TfrmTelaInicial = class(TForm)
@@ -38,6 +38,7 @@ type
     procedure UpdateProgressBar;
     function GetDataBaseArqIni: String;
     procedure SetDatabaseArqIni(ACaminhoBancoDeDados: String);
+    function Descriptografar(TextoCriptografado, Chave: String): String;
   public
     { Public declarations }
   end;
@@ -233,6 +234,29 @@ begin
   TDirectory.Delete(ACaminho);
 end;
 
+function TfrmTelaInicial.Descriptografar(TextoCriptografado, Chave: String): String;
+var
+  CryptoLib: TCryptographicLibrary;
+  Codificacao: TCodec;
+begin
+  Result := '';
+  CryptoLib := TCryptographicLibrary.Create(nil);
+  Codificacao := TCodec.Create(nil);
+  try
+    Codificacao.CryptoLibrary := CryptoLib;
+    Codificacao.StreamCipherId := 'native.StreamToBlock';
+    Codificacao.BlockCipherId := 'native.AES-256'; //Encriptação AES 256 bits
+    Codificacao.ChainModeId := 'native.CBC';
+
+    Codificacao.Reset;
+    Codificacao.Password := Chave; //Atribuindo a chave para Decriptografia
+    Codificacao.DecryptString(Result, TextoCriptografado, TEncoding.UTF8);
+  finally
+    FreeAndNil(CryptoLib);
+    FreeAndNil(Codificacao);
+  end;
+end;
+
 procedure TfrmTelaInicial.ExecutarCmd(ACmd: String);
 begin
   Query.SQL.Text := ACmd;
@@ -249,7 +273,7 @@ begin
   try
     CaminhoDatabase := ArquivoIni.ReadString('Software', 'Database', 'NullKey');
     if CaminhoDatabase <> 'NullKey' then
-      Result := CaminhoDatabase;
+      Result := Descriptografar(CaminhoDatabase, 'Neto@tvsd.com.br');
   finally
     ArquivoIni.Free;
   end;
