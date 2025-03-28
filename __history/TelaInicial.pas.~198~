@@ -290,13 +290,9 @@ end;
 
 procedure TfrmTelaInicial.ExecutarCmd(ACmd: String);
 begin
-  try
-    Query.SQL.Text := ACmd;
-    Query.ExecSQL;
-    Banco.Commit;
-  except
-    raise;
-  end;
+  Query.SQL.Text := ACmd;
+  Query.ExecSQL;
+  Banco.Commit;
 end;
 
 function TfrmTelaInicial.GetDataBaseArqIni: String;

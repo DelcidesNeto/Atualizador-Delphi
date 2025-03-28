@@ -147,11 +147,7 @@ begin
                                   Cmds := SplitString(Values.GetValue<String>(Keys[I]), '´');
                                   for var Cmd in Cmds do
                                     begin
-                                      try
-                                        ExecutarCmd(Cmd);
-                                      except
-
-                                      end;
+                                      ExecutarCmd(Cmd);
                                     end;
                                 end;
 
@@ -290,13 +286,9 @@ end;
 
 procedure TfrmTelaInicial.ExecutarCmd(ACmd: String);
 begin
-  try
-    Query.SQL.Text := ACmd;
-    Query.ExecSQL;
-    Banco.Commit;
-  except
-    raise;
-  end;
+  Query.SQL.Text := ACmd;
+  Query.ExecSQL;
+  Banco.Commit;
 end;
 
 function TfrmTelaInicial.GetDataBaseArqIni: String;
@@ -447,13 +439,9 @@ end;
 
 function TfrmTelaInicial.QryResult(AConsultaSQL: String): TFDQuery;
 begin
-  try
-    Query.SQL.Text := AConsultaSQL;
-    Query.Open;
-    Result := Query;
-  except
-    raise;
-  end;
+  Query.SQL.Text := AConsultaSQL;
+  Query.Open;
+  Result := Query;
 end;
 
 procedure TfrmTelaInicial.Sair(Sender: TObject);

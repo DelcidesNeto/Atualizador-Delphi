@@ -147,11 +147,7 @@ begin
                                   Cmds := SplitString(Values.GetValue<String>(Keys[I]), '´');
                                   for var Cmd in Cmds do
                                     begin
-                                      try
-                                        ExecutarCmd(Cmd);
-                                      except
-
-                                      end;
+                                      ExecutarCmd(Cmd);
                                     end;
                                 end;
 
@@ -290,13 +286,9 @@ end;
 
 procedure TfrmTelaInicial.ExecutarCmd(ACmd: String);
 begin
-  try
-    Query.SQL.Text := ACmd;
-    Query.ExecSQL;
-    Banco.Commit;
-  except
-    raise;
-  end;
+  Query.SQL.Text := ACmd;
+  Query.ExecSQL;
+  Banco.Commit;
 end;
 
 function TfrmTelaInicial.GetDataBaseArqIni: String;
@@ -432,28 +424,22 @@ end;
 function TfrmTelaInicial.GetVersionDatabase: String;
 begin
   Result := '-1';
-  try
-    var Query := QryResult('select db_versao from cfg_cobranca');
-    if not Query.IsEmpty then
-      begin
-        var Versao := Query.FieldByName('DB_VERSAO').AsString;
-        Result := Versao;
-      end;
-  except
-  end;
+  var Query := QryResult('select db_versao from cfg_cobranca');
+  ShowMessage(Query.ToString);
+  if not Query.IsEmpty then
+    begin
+      var Versao := Query.FieldByName('DB_VERSAO').AsString;
+      Result := Versao;
+    end;
 
 
 end;
 
 function TfrmTelaInicial.QryResult(AConsultaSQL: String): TFDQuery;
 begin
-  try
-    Query.SQL.Text := AConsultaSQL;
-    Query.Open;
-    Result := Query;
-  except
-    raise;
-  end;
+  Query.SQL.Text := AConsultaSQL;
+  Query.Open;
+  Result := Query;
 end;
 
 procedure TfrmTelaInicial.Sair(Sender: TObject);

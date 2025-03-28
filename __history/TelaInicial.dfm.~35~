@@ -12,6 +12,7 @@ object frmTelaInicial: TfrmTelaInicial
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poScreenCenter
+  OnCreate = FormCreate
   OnDestroy = FormDestroy
   TextHeight = 15
   object LabelStatus: TLabel
@@ -46,11 +47,11 @@ object frmTelaInicial: TfrmTelaInicial
     Visible = False
   end
   object Button1: TButton
-    Left = 256
+    Left = 184
     Top = 328
     Width = 75
     Height = 25
-    Caption = 'Button1'
+    Caption = 'Teste'
     TabOrder = 2
     OnClick = Button1Click
   end
