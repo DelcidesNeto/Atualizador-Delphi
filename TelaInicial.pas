@@ -12,6 +12,17 @@ uses
   FireDAC.VCLUI.Wait, FireDAC.Phys.IBBase, Data.DB, FireDAC.Comp.Client,
   FireDAC.Comp.DataSet, StrUtils, ShellAPI, System.IniFiles, uTPLb_CryptographicLibrary, uTPLb_Codec;
 
+
+type DadosArqIni = record
+    CaminhoBancoDeDados : String;
+    Porta               : String;
+    Servidor            : String;
+    TipoDeConexao       : Integer;
+    Usuario             : String;
+    Senha               : String;
+  end;
+
+
 type
   TfrmTelaInicial = class(TForm)
     Atualizar: TButton;
@@ -25,6 +36,7 @@ type
     procedure FormDestroy(Sender: TObject);
     procedure AtualizarClick(Sender: TObject);
     procedure Button1Click(Sender: TObject);
+    procedure FormShow(Sender: TObject);
     procedure Sair(Sender: TObject);
   private
     { Private declarations }
@@ -45,9 +57,13 @@ type
     class var GClicouNoBotao: Boolean;
     function GetVersionDatabase: String;
     function QryResult(AConsultaSQL: String): TFDQuery;
+    procedure SetarDadosNoBanco;
+    function GetDadosArqIni: DadosArqIni;
+    var KeyCript: String;
   public
     { Public declarations }
   end;
+  
 
 var
   frmTelaInicial: TfrmTelaInicial;
@@ -60,13 +76,14 @@ procedure TfrmTelaInicial.FormCreate(Sender: TObject);
 var
   CaminhoBancoDeDados: String;
 begin
-  CaminhoBancoDeDados := GetDataBaseArqIni;
-  if CaminhoBancoDeDados <> '' then
-    begin
-      Banco.Params.Database := CaminhoBancoDeDados;
-      Atualizar.Caption := 'Iniciar Atualização';
-    end;
+//  CaminhoBancoDeDados := GetDataBaseArqIni;
+//  if CaminhoBancoDeDados <> '' then
+//    begin
+//      Banco.Params.Database := CaminhoBancoDeDados;
+//      Atualizar.Caption := 'Iniciar Atualização';
+//    end;
   TfrmTelaInicial.GClicouNoBotao := False;
+  KeyCript := 'Neto@tvsd.com.br';
 end;
 
 procedure TfrmTelaInicial.FormDestroy(Sender: TObject);
@@ -299,6 +316,39 @@ begin
   end;
 end;
 
+function TfrmTelaInicial.GetDadosArqIni: DadosArqIni;
+var
+  ArquivoIni: TIniFile;
+  CaminhoDatabase: String;
+  DadosConexao: DadosArqIni;
+  PortaArqIni: String;
+  ServidorArqIni: String;
+begin
+  ArquivoIni := TIniFile.Create(ExtractFilePath(ParamStr(0))+'CONFIG.ini');
+  try
+    CaminhoDatabase := ArquivoIni.ReadString('Software', 'Database', 'NullKey');
+    if CaminhoDatabase <> 'NullKey' then
+      begin
+        DadosConexao.TipoDeConexao := ArquivoIni.ReadString('Software', 'TipoDeConexao', 'NullKey').ToInteger;
+        ServidorArqIni := ArquivoIni.ReadString('Software', 'Servidor', 'NullKey');
+        PortaArqIni := ArquivoIni.ReadString('Software', 'Porta', 'NullKey');
+        if ServidorArqIni <> '' then
+          ServidorArqIni := Descriptografar(ServidorArqIni, KeyCript);
+        if PortaArqIni <> '' then
+          PortaArqIni := Descriptografar(PortaArqIni, KeyCript);
+        DadosConexao.Servidor := ServidorArqIni;
+        DadosConexao.Porta := PortaArqIni;
+        DadosConexao.CaminhoBancoDeDados := Descriptografar(CaminhoDatabase, KeyCript);
+        DadosConexao.Usuario := Descriptografar(ArquivoIni.ReadString('Software', 'Usuario', 'NullKey'), KeyCript);
+        DadosConexao.Senha := Descriptografar(ArquivoIni.ReadString('Software', 'Senha', 'NullKey'), KeyCript);
+        Result := DadosConexao;
+      end;
+
+  finally
+    ArquivoIni.Free;
+  end;
+end;
+
 function TfrmTelaInicial.GetDataBaseArqIni: String;
 var
   ArquivoIni: TIniFile;
@@ -412,6 +462,11 @@ begin
   Values.Free;
 end;
 
+procedure TfrmTelaInicial.FormShow(Sender: TObject);
+begin
+  SetarDadosNoBanco;
+end;
+
 function TfrmTelaInicial.MoverExecutavel(ACaminhoOrigem, ANovoCaminho: String): Boolean;
 begin
   Result := False;
@@ -459,6 +514,32 @@ end;
 procedure TfrmTelaInicial.Sair(Sender: TObject);
 begin
   Self.Close;
+end;
+
+procedure TfrmTelaInicial.SetarDadosNoBanco;
+var
+  DadosArquivoIni: DadosArqIni;
+  PortaBanco: Integer;
+  ServerBanco: Integer;
+begin
+  DadosArquivoIni := GetDadosArqIni;
+  PortaBanco := Banco.Params.IndexOfName('Port');
+  if PortaBanco <> -1 then // Serve pra se a pessoa alterar algo no banco de dados, já ser atualizado em tempo real, sem ter a necessidade de abrir e fechar o sistema novamente.
+    begin
+      Banco.Params.Delete(PortaBanco);
+      ServerBanco := Banco.Params.IndexOfName('Server');
+      Banco.Params.Delete(ServerBanco);
+    end;
+
+  if DadosArquivoIni.TipoDeConexao <> 0 then
+    begin
+      Banco.Params.Add('Server='+DadosArquivoIni.Servidor);
+      Banco.Params.Add('Port='+DadosArquivoIni.Porta);
+    end;
+  Banco.Params.UserName := DadosArquivoIni.Usuario;
+  Banco.Params.Password := DadosArquivoIni.Senha;
+  Banco.Params.Database := DadosArquivoIni.CaminhoBancoDeDados;
+
 end;
 
 procedure TfrmTelaInicial.SetDatabaseArqIni(ACaminhoBancoDeDados: String);

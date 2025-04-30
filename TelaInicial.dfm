@@ -15,6 +15,7 @@ object frmTelaInicial: TfrmTelaInicial
   Position = poScreenCenter
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  OnShow = FormShow
   TextHeight = 15
   object LabelStatus: TLabel
     Left = 280
