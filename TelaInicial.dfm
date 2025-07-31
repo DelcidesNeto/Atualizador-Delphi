@@ -35,7 +35,7 @@ object frmTelaInicial: TfrmTelaInicial
     Top = 128
     Width = 201
     Height = 65
-    Caption = 'Vincular Banco de Dados'
+    Caption = 'Iniciar Atualiza'#231#227'o'
     TabOrder = 0
     OnClick = AtualizarClick
   end

@@ -1,6 +1,8 @@
-Win32/Debug/NSCobranças.exe
+*.exe
 *.identcache
 *.dcu
 *.dsk
 *.~dsk
 *.local
+*.FDB
+*.rsm

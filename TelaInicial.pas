@@ -60,6 +60,7 @@ type
     procedure SetarDadosNoBanco;
     function GetDadosArqIni: DadosArqIni;
     var KeyCript: String;
+    procedure ExecutarExeComFoco;
   public
     { Public declarations }
   end;
@@ -316,6 +317,76 @@ begin
   end;
 end;
 
+procedure TfrmTelaInicial.ExecutarExeComFoco;
+//var
+//  SI: TStartupInfoW;
+//  PI: TProcessInformation;
+//  AppPath: string;
+//begin
+//  AppPath := ExtractFilePath(ParamStr(0)) + 'NSCobranças.exe';
+//  ZeroMemory(@SI, SizeOf(SI));
+//  ZeroMemory(@PI, SizeOf(PI));
+//  SI.cb := SizeOf(SI);
+//  SI.dwFlags := STARTF_USESHOWWINDOW;
+//  SI.wShowWindow := SW_SHOWNORMAL;
+//
+//  if CreateProcessW(nil, PWideChar(WideString(AppPath)), nil, nil, False, 0, nil, nil, SI, PI) then
+//  begin
+//    // Permitir que o novo processo receba o foco
+//    AllowSetForegroundWindow(PI.dwProcessId);
+//
+//    // Fecha handles do processo se não for usá-los depois
+//    CloseHandle(PI.hProcess);
+//    CloseHandle(PI.hThread);
+//  end
+//  else
+//  begin
+//    MessageBox(0, 'Erro ao iniciar o sistema.', 'Erro', MB_OK or MB_ICONERROR);
+//  end;
+//end;
+var
+  ExecInfo: TShellExecuteInfo;
+  hWndNovaJanela: HWND;
+  Tentativas: Integer;
+  AppPath: string;
+  WindowCaption: String;
+begin
+  WindowCaption := 'NSCobranças';
+  AppPath := ExtractFilePath(ParamStr(0)) + 'NSCobranças.exe';
+  ZeroMemory(@ExecInfo, SizeOf(ExecInfo));
+  ExecInfo.cbSize := SizeOf(ExecInfo);
+  ExecInfo.fMask := SEE_MASK_NOCLOSEPROCESS;
+  ExecInfo.lpVerb := 'open';
+  ExecInfo.lpFile := PChar(AppPath);
+  ExecInfo.nShow := SW_SHOWNORMAL;
+
+  if ShellExecuteEx(@ExecInfo) then
+  begin
+    // Espera o processo inicializar
+    WaitForInputIdle(ExecInfo.hProcess, 10000);
+    Sleep(500);
+
+    // Tenta encontrar a janela com o título esperado
+    Tentativas := 0;
+    repeat
+      hWndNovaJanela := FindWindow(nil, PChar(WindowCaption));
+      Inc(Tentativas);
+      Sleep(200);
+    until (hWndNovaJanela <> 0) or (Tentativas > 20); // tenta por até ~4 segundos
+
+    if hWndNovaJanela <> 0 then
+    begin
+      SetForegroundWindow(hWndNovaJanela);
+      BringWindowToTop(hWndNovaJanela);
+      ShowWindow(hWndNovaJanela, SW_RESTORE);
+    end;
+
+    CloseHandle(ExecInfo.hProcess);
+  end
+  else
+    MessageBox(0, 'Erro ao iniciar o sistema.', 'Erro', MB_OK or MB_ICONERROR);
+end;
+
 function TfrmTelaInicial.GetDadosArqIni: DadosArqIni;
 var
   ArquivoIni: TIniFile;
@@ -465,6 +536,8 @@ end;
 procedure TfrmTelaInicial.FormShow(Sender: TObject);
 begin
   SetarDadosNoBanco;
+  if Banco.Params.Database = '' then
+    Atualizar.Caption := 'Vincular Banco de Dados';
 end;
 
 function TfrmTelaInicial.MoverExecutavel(ACaminhoOrigem, ANovoCaminho: String): Boolean;
